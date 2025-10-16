@@ -1,0 +1,1687 @@
+<!DOCTYPE html>
+<html lang="it">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width,initial-scale=1" name="viewport"/>
+  <title>
+   Calcolo Del Danno — Layout 5 (Modificato)
+  </title>
+  <style>
+   :root{
+  --bg:#0b0b0c; --card:#1a1a1b; --input:#000; --text:#ffffff;
+  --title:#8b5cf6; --border:#303033; --green:#3ad36d; --red:#ff6b6b; --accent:#a020f0;
+  --celeste: #7feaff;
+  --bronze: #CD7F32; /* Colore Bronzo aggiunto */
+}
+body{ background:var(--bg); color:var(--text); font-family:Arial, Helvetica, sans-serif; margin:18px; }
+h1{ text-align:center; color:var(--title); margin-bottom:16px; }
+
+/* layout */
+.top{ display:flex; gap:20px; justify-content:center; align-items:flex-start; flex-wrap:wrap; }
+
+/* cards */
+.card{ background:var(--card); padding:12px; border-radius:10px; border:1px solid var(--border); box-sizing:border-box; }
+.stats{ display:flex; gap:16px; }
+.col{ display:flex; flex-direction:column; gap:8px; min-width:170px; }
+
+/* common */
+label{ font-size:0.92rem; color:var(--text); display:block; text-align:center; margin-bottom:4px; }
+input[type="number"], input[type="text"], select{
+  background:var(--input); color:var(--text); border:1px solid #2c2c2c; border-radius:6px; padding:6px 8px; text-align:center;
+}
+input[readonly]{ border:none; background:transparent; color:var(--celeste); font-weight:700; }
+input[readonly]#dmp1, input[readonly]#dmp2 { color:var(--green); font-weight:900; } /* DMP input remains green */
+
+/* STATS - Probabilities Group */
+.prob-group {
+    margin-top: 10px;
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
+.prob-col {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+}
+.prob-label {
+    display:block; 
+    text-align:left; 
+    margin-bottom:2px;
+    font-size:0.9rem;
+}
+
+/* weapons */
+/* weapon group container */
+#weaponGroup {
+    border-color: var(--celeste);
+}
+.weapon{ width:320px; display:flex; flex-direction:column; gap:8px; }
+.dice-group{ text-align:center; margin-top:8px; }
+/* I dadi vengono affiancati dal nuovo div flex in HTML */
+.dice-select{ width:auto; min-width:56px; margin:0; display:inline-block; } 
+
+
+/* skills (Card) - Per il layout dei campi affiancati */
+.skills{ 
+    width:100%; /* Assicura che la card prenda la larghezza del contenitore */
+    display:flex; 
+    flex-direction:column; 
+    gap:8px; 
+    align-items:center; 
+}
+.skills-input-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    width: 100%;
+}
+.skills-field {
+    display: flex;
+    flex-direction: column;
+    width: calc(50% - 5px); /* Metà larghezza meno il gap */
+    min-width: 120px;
+    align-items: center;
+}
+.skills-field label {
+    text-align: center;
+    margin-bottom: 4px;
+    width: 100%;
+    font-size: 0.92rem;
+}
+
+
+/* mob */
+.mob{ width:360px; margin:18px auto; text-align:center; padding:10px; }
+
+/* tables */
+table{ width:100%; max-width:1300px; margin:16px auto; border-collapse:collapse; font-size:0.85rem; }
+th, td{ border:1px solid #262626; padding:6px 4px; text-align:center; color:var(--text); }
+th{ background:#141414; }
+.green{ color:var(--green); font-weight:700; }
+.red{ color:var(--red); font-weight:700; }
+
+/* sim panel */
+#simPanel{ width:300px; padding:12px; border:1px solid var(--border); border-radius:10px; }
+
+/* small responsive */
+@media(max-width:1300px){
+    table { font-size: 0.8rem; }
+}
+@media(max-width:980px){
+  .top{ flex-direction:column; align-items:center; }
+  #weaponGroup { min-width: 100%; }
+  .weapon { width: 100%; }
+  .weaponGroupInner { flex-direction: column; }
+  /* Aggiustamento per il pannello skills in caso di schermo piccolo */
+  .skills-field { width: 100%; min-width: auto; }
+  #simPanel{ width:100%; }
+}
+
+/* nuovo contenitore skills per il centramento (usato nella riorganizzazione) */
+.skills-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px; 
+}
+  </style>
+ </head>
+ <body>
+  <h1>
+   Calcolo Del Danno
+  </h1>
+  <div class="top">
+   <div class="card" id="statsCard" style="min-width:560px;">
+    <h3 style="margin-top:0; text-align:center;">
+     Statistiche Base
+    </h3>
+    <div class="stats">
+     <div class="col">
+      <label>
+       Dam
+      </label>
+      <input id="dam" type="number" value="100"/>
+      <label>
+       Spellpower
+      </label>
+      <input id="spellpower" type="number" value="80"/>
+     </div>
+     <div class="col">
+      <label>
+       Precisione
+      </label>
+      <input id="precisione" type="number" value="120"/>
+      <label>
+       Colpo Critico
+      </label>
+      <input id="colpoCritico" type="number" value="50"/>
+      <label>
+       Letalità
+      </label>
+      <input id="letalita" type="number" value="180"/>
+      <label>
+       Penetrazione
+      </label>
+      <input id="penetrazione" type="number" value="50"/>
+     </div>
+     <div class="col">
+      <label>
+       Corpo a Corpo Fisico (%)
+      </label>
+      <input id="cacFisico" type="number" value="20"/>
+      <label>
+       Corpo a Corpo Magico (%)
+      </label>
+      <input id="cacMagico" type="number" value="15"/>
+      <div class="prob-group">
+        <h4 style="margin-top:0; text-align:center; color:var(--accent); font-size:1rem;">Probabilità Colpi</h4>
+        <div class="prob-col">
+          <div>
+            <label id="lblProbLore" class="prob-label" style="color:#b4b4ff;">
+              Lore: 0%
+            </label>
+            <div id="barLore" style="width:100%; height:6px; background:#222; border-radius:3px;">
+              <div id="fillLore" style="width:0%; height:100%; background:#4c4cff; border-radius:3px; transition:width 0.4s;"></div>
+            </div>
+          </div>
+          <div>
+            <label id="lblProbCritico" class="prob-label" style="color:#ffb4b4;">
+              Critico: 0%
+            </label>
+            <div id="barCrit" style="width:100%; height:6px; background:#222; border-radius:3px;">
+              <div id="fillCrit" style="width:0%; height:100%; background:#ff4c4c; border-radius:3px; transition:width 0.4s;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+     </div>
+    </div>
+    <div class="mob card">
+     <h4 style="margin:6px 0;">
+      Livello Mob
+     </h4>
+     <input id="livelloMob" style="width:120px; margin:6px auto; display:block;" type="number" value="50"/>
+     <div style="margin-top:6px;">
+      Resistenza Mob:
+      <span id="resMob">
+       0
+      </span>
+      <span id="resTooltipTrigger" style="cursor:help; color:var(--accent); margin-left:5px;">
+       (?)
+      </span>
+     </div>
+    </div>
+    <div class="prob-group" style="margin-top:15px; border-color:var(--title);">
+     <h4 style="margin-top:0; text-align:center; color:var(--title); font-size:1rem;">
+      Gestione Profili
+     </h4>
+     <div style="display:flex; flex-direction:column; gap:8px;">
+      <div style="display:flex; gap:5px; justify-content:center; align-items:center;">
+       <input id="profileName" placeholder="Nome Profilo" style="width:150px; text-align:left;" type="text"/>
+       <button id="saveProfileBtn" style="min-width:70px;">
+        Salva
+       </button>
+      </div>
+      <select id="profileSelector" style="width:100%; margin: 0 auto; min-width: 250px;">
+      </select>
+      <div style="text-align:center; display:flex; gap:10px; justify-content:center;">
+       <button id="loadProfileBtn">
+        Carica Selezionato
+       </button>
+       <button id="deleteProfileBtn" style="background-color:var(--red);">
+        Elimina
+       </button>
+      </div>
+     </div>
+    </div>
+   </div>
+   <div class="card" id="weaponGroup" style="display:flex; flex-direction:column; gap:10px; min-width:670px;">
+    
+    <div id="tricornGroup" style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:8px;">
+        <input type="checkbox" id="tricornCheckbox" style="
+            background-color: black; 
+            border: 1px solid #303033; 
+            width: 16px; 
+            height: 16px;
+            accent-color: var(--bronze); /* Colore del segno di spunta */
+        "/>
+        <label for="tricornCheckbox" style="color:var(--bronze); text-align:left; margin-bottom:0; font-size:1rem;">
+            Il Tricorno Dello Spadaccino (Premio Sfide - Set Accademia)
+        </label>
+    </div>
+    <h4 style="margin-top:0; text-align:center; color:var(--celeste);">
+     Modalità Armi
+    </h4>
+    <select id="weaponMode" style="width:100%; text-align:center; margin-bottom:8px;">
+     <option value="dualWield">
+      Doppia Arma (Arma 2: Dadi x0.75)
+     </option>
+     <option value="twoHanded">
+      Arma a Due Mani (Arma 1: Dadi x3, Arma 2 disattivata)
+     </option>
+     <option value="weaponShield">
+      Arma + Scudo (Arma 2 disattivata)
+     </option>
+    </select>
+    <div class="weaponGroupInner" style="display:flex; gap:18px; justify-content:center; align-items:flex-start;">
+     <div class="card weapon" id="weapon1" style="width:320px; margin:0; padding:12px;">
+      <h4 style="margin:0 0 6px 0; text-align:center;">
+       Arma Principale
+      </h4>
+      <label>
+       Efficacia Fisica (%)
+      </label>
+      <input id="effFisica1" type="number" value="25"/>
+      <label>
+       Efficacia Magica (%)
+      </label>
+      <input id="effMagica1" type="number" value="10"/>
+      <label>
+       Danno Arma (valore fisso)
+      </label>
+      <input id="dannoArma1" type="number" value="40"/>
+      <div class="dice-group">
+       <label>
+        Dadi
+       </label>
+       <div style="display:flex; justify-content:center; gap:5px; margin-top:4px;"> 
+           <select class="dice-select" id="diceNum1"></select>
+           <select class="dice-select" id="diceType1"></select>
+       </div>
+      </div>
+      <hr style="border:0;border-top:1px solid #222;margin:10px 0;"/>
+      <div style="text-align:center;">
+       <label style="display:block; margin-bottom:6px; color:var(--red);">
+        Danno Medio Ponderato (DMP)
+       </label>
+       <input id="dmp1" readonly="" style="display:block; margin:0 auto; color:var(--green);" type="number"/>
+      </div>
+      <hr style="border:0;border-top:1px solid #222;margin:10px 0;"/>
+      <div style="text-align:center;">
+       <label>
+        Attacco Base (al Mob)
+       </label>
+       <input id="base1" readonly="" style="display:block; margin:0 auto;" type="number"/>
+      </div>
+      <div style="text-align:center;">
+       <label>
+        Attacco Lore (al Mob)
+       </label>
+       <input id="lore1" readonly="" style="display:block; margin:0 auto;" type="number"/>
+      </div>
+      <div style="text-align:center;">
+       <label>
+        Attacco Critico (al Mob)
+       </label>
+       <input id="crit1" readonly="" style="display:block; margin:0 auto;" type="number"/>
+      </div>
+      <div style="text-align:center;">
+       <label>
+        Critico + Lore (al Mob)
+       </label>
+       <input id="critLore1" readonly="" style="display:block; margin:0 auto;" type="number"/>
+      </div>
+     </div>
+     <div class="card weapon" id="weapon2" style="width:320px; margin:0; padding:12px;">
+      <h4 style="margin:0 0 6px 0; text-align:center;">
+       Arma Secondaria
+      </h4>
+      <label>
+       Efficacia Fisica (%)
+      </label>
+      <input id="effFisica2" type="number" value="15"/>
+      <label>
+       Efficacia Magica (%)
+      </label>
+      <input id="effMagica2" type="number" value="20"/>
+      <label>
+       Danno Arma (valore fisso)
+      </label>
+      <input id="dannoArma2" type="number" value="25"/>
+      <div class="dice-group">
+       <label>
+        Dadi
+       </label>
+       <div style="display:flex; justify-content:center; gap:5px; margin-top:4px;">
+           <select class="dice-select" id="diceNum2"></select>
+           <select class="dice-select" id="diceType2"></select>
+       </div>
+      </div>
+      <hr style="border:0;border-top:1px solid #222;margin:10px 0;"/>
+      <div style="text-align:center;">
+       <label style="display:block; margin-bottom:6px; color:var(--red);">
+        Danno Medio Ponderato (DMP)
+       </label>
+       <input id="dmp2" readonly="" style="display:block; margin:0 auto; color:var(--green);" type="number"/>
+      </div>
+      <hr style="border:0;border-top:1px solid #222;margin:10px 0;"/>
+      <div style="text-align:center;">
+       <label>
+        Attacco Base (al Mob)
+       </label>
+       <input id="base2" readonly="" style="display:block; margin:0 auto;" type="number"/>
+      </div>
+      <div style="text-align:center;">
+       <label>
+        Attacco Lore (al Mob)
+       </label>
+       <input id="lore2" readonly="" style="display:block; margin:0 auto;" type="number"/>
+      </div>
+      <div style="text-align:center;">
+       <label>
+        Attacco Critico (al Mob)
+       </label>
+       <input id="crit2" readonly="" style="display:block; margin:0 auto;" type="number"/>
+      </div>
+      <div style="text-align:center;">
+       <label>
+        Attacco Critico (al Mob)
+       </label>
+       <input id="critLore2" readonly="" style="display:block; margin:0 auto;" type="number"/>
+      </div>
+     </div>
+    </div>
+   </div>
+   <div style="display:flex; flex-direction:column; gap:18px; align-items:flex-start;">
+    <div class="card" id="simPanel" style="width:300px;">
+     <h4 style="margin:6px 0;">
+      Simulazione Danni
+     </h4>
+     <p style="margin:6px 0; font-size:0.95rem;">
+      Valore Medio 100 Attacchi
+     </p>
+     <div style="display:flex; gap:8px; justify-content:center; margin-top:8px;">
+      <button id="simulateBtn">
+       Simula 100
+      </button>
+     </div>
+     <div id="simResults" style="margin-top:10px; text-align:left;">
+     </div>
+     <div style="margin-top: 15px; border-top: 1px solid #303033; padding-top: 10px;">
+      <h4 style="color:var(--red); margin:0 0 8px 0; text-align:center;">
+       Primaria
+      </h4>
+      <div id="histogram1" style="height: 120px; display: flex; align-items: flex-end; justify-content: flex-start;">
+       </div>
+      <div id="histogramLabels1" style="display:flex; justify-content:space-between; font-size: 0.7rem; color: #aaa;">
+      </div>
+     </div>
+     <div style="margin-top: 15px; border-top: 1px solid #303033; padding-top: 10px;">
+      <h4 style="color:var(--red); margin:0 0 8px 0; text-align:center;">
+       Secondaria
+      </h4>
+      <div id="histogram2" style="height: 120px; display: flex; align-items: flex-end; justify-content: flex-start;">
+       </div>
+      <div id="histogramLabels2" style="display:flex; justify-content:space-between; font-size: 0.7rem; color: #aaa;">
+       </div>
+     </div>
+     <div style="text-align:center; margin-top:12px;">
+      <button id="saveBtn">
+       Popola Tabella Danni
+      </button>
+     </div>
+    </div>
+   </div>
+  </div>
+  <h3 style="color:#8b5cf6; text-align:center; margin-top:12px;">
+   Risultati Armi
+  </h3>
+  <table id="mainTable">
+   <thead>
+    <tr>
+     <th>
+      Liv. Mob
+     </th>
+     <th>
+      Dam
+     </th>
+     <th>
+      Spell
+     </th>
+     <th>
+      Precisione
+     </th>
+     <th>
+      Critico
+     </th>
+     <th>
+      Letalità
+     </th>
+     <th>
+      Penetrazione
+     </th>
+     <th>
+      Prob. Lore (%)
+     </th>
+     <th>
+      Diff Lore (+/-)
+     </th>
+     <th>
+      Prob. Crit. (%)
+     </th>
+     <th>
+      Diff Crit. (+/-)
+     </th>
+     <th>
+      Eff. Fis. %
+     </th>
+     <th>
+      Eff. Mag. %
+     </th>
+     <th>
+      DMP 1
+     </th>
+     <th>
+      Base 1
+     </th>
+     <th>
+      Lore 1
+     </th>
+     <th>
+      Crit 1
+     </th>
+     <th>
+      C+L 1
+     </th>
+     <th>
+      DMP 2
+     </th>
+     <th>
+      Base 2
+     </th>
+     <th>
+      Lore 2
+     </th>
+     <th>
+      Crit 2
+     </th>
+     <th>
+      C+L 2
+     </th>
+     <th>
+      Recupera
+     </th>
+    </tr>
+   </thead>
+   <tbody>
+   </tbody>
+  </table>
+  
+  <section id="skillsAndSpellsGroup" style="border:1px solid var(--border); border-radius:10px; padding:15px; margin: 20px auto; max-width: 1300px; box-sizing:border-box;">
+      <div class="skills-container">
+        <div class="card skills" id="skillsCard">
+         <h4 style="margin:0; text-align:center;">
+          Calcolo Skills &amp; Spells
+         </h4>
+         <div class="skills-input-wrapper">
+             <div class="skills-field">
+                <label>Efficacia Magica (%)</label>
+                <input id="effMagSkill" type="number" value="20"/>
+             </div>
+             <div class="skills-field">
+                <label>Efficacia Fisica (%)</label>
+                <input id="effFisSkill" type="number" value="25"/>
+             </div>
+             <div class="skills-field">
+                <label>Danno Innato</label>
+                <input id="dannoInnato" type="number" value="50"/>
+             </div>
+             <div class="skills-field">
+                <label>Efficenza Abilita Innato (%)</label>
+                <input id="effAbilitaInnato" type="number" value="15"/>
+             </div>
+         </div>
+         <div style="text-align:center; margin-top:8px;">
+          <button id="lanciaBtn">
+           Lancia
+          </button>
+         </div>
+         <div id="lanciaOutput" style="margin-top:10px; font-weight:700; text-align:center;">
+         </div>
+        </div>
+      </div>
+      
+      <h3 style="color:#8b0000; text-align:center; margin-top:12px;">
+       Risultati Skills &amp; Spells
+      </h3>
+      <table id="skillsTable">
+       <thead>
+        <tr>
+         <th style="color:#ffffff">
+          Eff Mag (%)
+         </th>
+         <th style="color:#ffffff">
+          Eff Fis (%)
+         </th>
+         <th style="color:#ffffff">
+          Danno Innato
+         </th>
+         <th style="color:#ffffff">
+          Eff Abil (%)
+         </th>
+         <th style="color:var(--accent);">
+          Danno Base
+         </th>
+         <th style="color:#b4b4ff;">
+          Danno Lore
+         </th>
+         <th style="color:#ffb4b4;">
+          Danno Critico
+         </th>
+         <th style="color:var(--bronze);">
+          Danno C+L
+         </th>
+         <th style="color:var(--green);">
+          DMP Skill
+         </th>
+         <th style="color:#ffffff">
+          Recupera
+         </th>
+        </tr>
+       </thead>
+       <tbody>
+       </tbody>
+      </table>
+  </section>
+  <div style="text-align:center; margin: 25px auto;">
+   <button id="resetAllBtn" style="
+    padding: 10px 20px; 
+    font-size: 1.1rem; 
+    background-color: #8B0000; /* Rosso Scuro */
+    color: #FFFFFF; /* Testo Bianco */
+    border-radius: 8px; /* Arrotondamento */
+    border: none; /* Rimuove il bordo predefinito */
+    cursor: pointer;
+   ">
+    Reset Globale
+   </button>
+  </div>
+  <script>
+   /* ---------------------------
+   Helper
+   --------------------------- */
+const $ = id => document.getElementById(id);
+
+/* small formatting helper:
+   - shows integer without decimals, otherwise trims trailing zeros
+*/
+function fmtNumber(n, maxDecimals=4){
+  if (!isFinite(n)) return '0';
+  // rounding to maxDecimals then trim zeros
+  const rounded = Number(n.toFixed(maxDecimals));
+  // if integer, show no decimals
+  if (Math.abs(rounded - Math.round(rounded)) < 1e-9) return String(Math.round(rounded));
+  // otherwise show up to needed decimals without trailing zeros
+  let s = rounded.toFixed(maxDecimals).replace(/\.?0+$/,'');
+  return s;
+}
+function calcProbPerc(v){
+  v = Number(v) || 0;
+  return (1.8 * v) / (Math.abs(v) + 900) * 100;
+}
+function pctToColor(pct) {
+    const h = Math.round(Math.max(0, Math.min(100, pct)) * 1.2);
+    return `hsl(${h}, 75%, 45%)`;
+  }
+
+/* Formatta la differenza con il segno corretto (solo testo) */
+function fmtDiff(diff) {
+    const sign = diff >= 0 ? '+' : '';
+    return sign + fmtNumber(diff, 2);
+}
+
+/* Calcolo del Valore Medio dei Dadi */
+function avgDiceRoll(n, s) {
+  const num = parseInt(n) || 0;
+  const sides = parseInt(s) || 0;
+  if(num === 0 || sides === 0) return 0;
+  return num * (sides + 1) / 2;
+}
+
+/* ----------------------------------------------------------------------
+   NUOVO: Calcolo del Danno Medio Ponderato (DMP)
+   Implementa probabilità di MANCARE e TIRI INDIPENDENTI per Lore e Critico
+   ---------------------------------------------------------------------- */
+function calcDMP(attBase, attLore, attCrit, attCritLore, probLore, probCritico, avgRoll) {
+    // 1. Probabilità di Manacare (Miss)
+    const pMiss = 0.05; // 5% di mancare il bersaglio
+    const pHit = 1.00 - pMiss; // Probabilità di colpire (Hit)
+
+    // 2. Probabilità di attivazione (in decimali)
+    const pL = probLore / 100;
+    const pC = probCritico / 100;
+    
+    // 3. Probabilità di attivazione dei tipi di colpo (Rolls INDIPENDENTI)
+    // p(L and C)
+    const pCritLoreHit = pL * pC;
+    // p(L and not C)
+    const pOnlyLoreHit = pL * (1 - pC);
+    // p(not L and C)
+    const pOnlyCritHit = (1 - pL) * pC;
+    // p(not L and not C)
+    const pBaseHit = (1 - pL) * (1 - pC);
+
+    // 4. Calcolo del Danno Fisso Medio (se il colpo va a segno)
+    let avgFixedDmg = 0;
+    // DMP = Danno Fisso ponderato per probabilità
+    avgFixedDmg += (pBaseHit * attBase);        // Usa D_F,B moltiplicato x1.0 (o x(1+LF) se Tricorno)
+    avgFixedDmg += (pOnlyLoreHit * attLore);    // Usa D_F,L moltiplicato x1.2 (o x1.2x(1+LF) se Tricorno)
+    avgFixedDmg += (pOnlyCritHit * attCrit);    // Usa D_F,B moltiplicato x(1.5+LF) (0 se Tricorno)
+    avgFixedDmg += (pCritLoreHit * attCritLore); // Usa D_F,L moltiplicato x1.2x(1.5+LF) (0 se Tricorno)
+
+    // 5. Il DMP è: (Danno Fisso Medio + Danno Dado Medio) * Probabilità di Colpire
+    let dmp = (avgFixedDmg + avgRoll) * pHit;
+
+    return dmp;
+}
+
+
+/* ---------------------------
+   Populate dice selects (1..30 dice and d1..d30)
+   --------------------------- */
+function populateDiceSelects(){
+  const n1 = $('diceNum1'), t1 = $('diceType1'), n2 = $('diceNum2'), t2 = $('diceType2');
+  for(let i=1;i<=30;i++){
+    const oN1 = document.createElement('option'); oN1.value=i; oN1.text=i; n1.appendChild(oN1);
+    const oN2 = document.createElement('option'); oN2.value=i; oN2.text=i; n2.appendChild(oN2);
+  }
+  for(let s=1;s<=30;s++){
+    const oT1 = document.createElement('option'); oT1.value=s; oT1.text='d'+s; t1.appendChild(oT1);
+    const oT2 = document.createElement('option'); oT2.value=s; oT2.text='d'+s; t2.appendChild(oT2);
+  }
+  n1.value = 1; t1.value = 6;
+  n2.value = 1; t2.value = 6;
+}
+populateDiceSelects();
+
+/* ---------------------------
+   Math helpers
+   --------------------------- */
+function calcResistence(level){
+  let mul = 1;
+  if(level > 45) mul += 0.25;
+  if(level > 52) mul += 0.15;
+  if(level > 56) mul += 0.4;
+  if(level > 61) mul += 0.45;
+  return level * mul;
+}
+function rollDice(n,s, multiplier=1){
+  let sum = 0;
+  for(let i=0;i<n;i++) sum += Math.floor(Math.random()*s) + 1;
+  return sum * multiplier;
+}
+
+
+/* ---------------------------
+   Core: updateAll calculates weapon mob damages, resMob, AND Probabilities
+   (Aggiornato per Tricorno e Logica Danno)
+   --------------------------- */
+function updateAll(){
+  // read base stats
+  const Dam = parseFloat($('dam').value) || 0;
+  const Spell = parseFloat($('spellpower').value) || 0;
+  const Prec = parseFloat($('precisione').value) || 0;
+  const CritStat = parseFloat($('colpoCritico').value) || 0;
+  const Letal = parseFloat($('letalita').value) || 0;
+  const Pen = parseFloat($('penetrazione').value) || 0;
+  const CAC_F = (parseFloat($('cacFisico').value) || 0) / 100; // decimal
+  const CAC_M = (parseFloat($('cacMagico').value) || 0) / 100;
+  const level = parseInt($('livelloMob').value) || 1;
+  const weaponMode = $('weaponMode').value; // Legge la modalità arma
+  
+  // NEW: Read Tricorno state
+  const isTricornActive = $('tricornCheckbox').checked;
+
+  // 1. Calculate base probabilities
+  const ProbLoreBase = calcProbPerc(Prec);
+  const ProbCriticoBase = calcProbPerc(CritStat);
+
+  // 2. Apply Tricorno effect (for display and calculation)
+  const ProbLoreFinal = ProbLoreBase;
+  const ProbCriticoFinal = isTricornActive ? 0 : ProbCriticoBase;
+
+  // 3. Update UI Probabilities
+  const loreText = "Lore: " + fmtNumber(ProbLoreBase,2) + "%"; // Mostra sempre ProbBase
+  const critText = isTricornActive ? "Critico: 0% (Tricorno)" : "Critico: " + fmtNumber(ProbCriticoBase,2) + "%";
+  
+  $('lblProbLore').textContent = loreText;
+  $('lblProbCritico').textContent = critText;
+
+  $('fillLore').style.width = Math.min(100, ProbLoreFinal) + "%";
+  $('fillLore').style.background = pctToColor(ProbLoreFinal);
+
+  $('fillCrit').style.width = Math.min(100, ProbCriticoFinal) + "%";
+  $('fillCrit').style.background = pctToColor(ProbCriticoFinal);
+  // FINE AGGIORNAMENTO PROBABILITA
+
+  // resistenza mob
+  const resMob = calcResistence(level);
+  $('resMob').innerText = fmtNumber(resMob,2);
+  
+  // Calcolo Fattori di Resistenza (i Fattori, non il Danno) - Globali
+  const RB = -(resMob - Pen);
+  const RL = -(resMob - (Pen * 1.5)); // Bonus Penetrazione per Lore (1.5x)
+  const FB = 1 + calcProbPerc(RB) / 100; // Fattore Resistenza Base/Crit
+  const FL = 1 + calcProbPerc(RL) / 100; // Fattore Resistenza Lore/Crit+Lore
+  const Letal_Factor = calcProbPerc(Letal) / 100; // Fattore Letalità
+
+  // internal compute
+  function computeWeapon(n){
+    const effFisW = (parseFloat($('effFisica' + n).value) || 0) / 100;
+    const effMagW = (parseFloat($('effMagica' + n).value) || 0) / 100;
+    const dmgWeapon = parseFloat($('dannoArma' + n).value) || 0;
+    const diceNum = parseInt($('diceNum' + n).value) || 0;
+    const diceType = parseInt($('diceType' + n).value) || 0;
+    
+    let isWeaponActive = true;
+    let diceMultiplier = 1;
+
+    if (n === 1) { // Arma Principale
+        if (weaponMode === 'twoHanded') diceMultiplier = 3; 
+    } else if (n === 2) { // Arma Secondaria
+        if (weaponMode === 'dualWield') diceMultiplier = 0.75; 
+        else if (weaponMode === 'twoHanded' || weaponMode === 'weaponShield') {
+            isWeaponActive = false;
+        }
+    }
+    
+    // Disabilita/abilita l'Arma 2 in base alla modalità
+    const inputs2 = document.querySelectorAll('#weapon2 input:not([readonly]), #weapon2 select');
+    const weapon2Card = $('weapon2');
+    if (n === 2) {
+        inputs2.forEach(input => input.disabled = !isWeaponActive);
+        weapon2Card.style.opacity = isWeaponActive ? '1.0' : '0.4';
+    }
+
+    if (!isWeaponActive) {
+        return { attBase:0, attLore:0, attCrit:0, attCritLore:0, effFisTot:0, effMagTot:0, dmp:0, isWeaponActive:false, FB:FB, FL:FL, Letal_Factor:Letal_Factor, D_Fixed_Base_Puro:0 };
+    }
+
+
+    const effFisTot = CAC_F + effFisW;
+    const effMagTot = CAC_M + effMagW;
+
+    let damAdj = Dam, spellAdj = Spell;
+    if (effFisW > effMagW) damAdj += dmgWeapon; else spellAdj += dmgWeapon;
+
+    // Danno Fisso Puro (BaseVal) - Senza Resistenza applicata
+    const baseVal = (damAdj * effFisTot) + (spellAdj * effMagTot);
+    
+    // 1. Calcolo Danni Fissi per UI/DMP (Resistenza applicata alla componente fissa)
+    const D_F_B_UI = baseVal * FB; // Danno Fisso Base per UI/DMP
+    const D_F_L_UI = baseVal * FL; // Danno Fisso Lore per UI/DMP
+
+
+    // 2. Calcolo dei quattro valori di Danno Fisso per l'UI (DMP e Simulazione)
+    let attBase = D_F_B_UI;
+    let attLore = D_F_L_UI * 1.2;
+    let attCrit = D_F_B_UI * (1.5 + Letal_Factor); 
+    let attCritLore = D_F_L_UI * 1.2 * (1.5 + Letal_Factor);
+    
+    // NEW: APPLICAZIONE LOGICA TRICORNO (Modifica il danno Base/Lore e annulla Critico)
+    if (isTricornActive) {
+        // La logica Tricorno forza il moltiplicatore Letalità sul colpo Base/Lore
+        // Ma annulla l'Attacco Critico (ProbCriticoFinal = 0)
+        
+        // Colpo Base (Base * FB * (1 + Letal_Factor))
+        attBase = D_F_B_UI * (1.00 + Letal_Factor); 
+        
+        // Colpo Lore (Base * FL * 1.2 * (1 + Letal_Factor))
+        attLore = D_F_L_UI * 1.2 * (1.00 + Letal_Factor);
+        
+        // Forza Critico a 0
+        attCrit = 0; 
+        attCritLore = 0;
+    }
+
+    
+    // 3. Calcola il Danno Medio Ponderato (DMP)
+    const currentAvgRoll = avgDiceRoll(diceNum, diceType) * diceMultiplier;
+    // Passa i QUATTRO VALORI CALCOLATI per DMP (base fissa + resistenza applicata)
+    // Vengono ponderati per le probabilità finali (che tengono conto di Tricorno)
+    let dmp = calcDMP(attBase, attLore, attCrit, attCritLore, ProbLoreFinal, ProbCriticoFinal, currentAvgRoll);
+
+    
+    // 4. write to UI with formatting
+    $('base' + n).value = fmtNumber(attBase,2);
+    $('lore' + n).value = fmtNumber(attLore,2);
+    $('crit' + n).value = fmtNumber(attCrit,2);
+    $('critLore' + n).value = fmtNumber(attCritLore,2);
+    $('dmp' + n).value = fmtNumber(dmp,2); // Scrivi il DMP
+
+    // 5. Ritorna i Dati per la simulazione
+    return { 
+        attBase: attBase, 
+        attLore: attLore, 
+        // PASSIAMO I VALORI PURI E I FATTORI DI RESISTENZA
+        D_Fixed_Base_Puro: baseVal, // Danno Fisso Puro (SENZA FB/FL applicato)
+        FB, // Fattore Resistenza Base
+        FL, // Fattore Resistenza Lore
+        Letal_Factor,
+        effFisTot, effMagTot, dmp, isWeaponActive, 
+        currentAvgRoll,
+        diceNum, diceType, diceMultiplier // Dati dadi per simulazione
+    }; 
+  }
+
+  const results1 = computeWeapon(1);
+  const results2 = computeWeapon(2);
+
+  // Conserva i risultati di base e i fattori globali per la simulazione e skill
+  window.simData = { 
+      results1, 
+      results2,
+      ProbLoreFinal, // Probabilità per simulazione/skill
+      ProbCriticoFinal
+  }; 
+
+  return { results1, results2, ProbLore: ProbLoreFinal, ProbCritico: ProbCriticoFinal }; 
+}
+
+/* attach reactive listeners */
+const reactiveIds = [
+  'dam','spellpower','precisione','colpoCritico','letalita','penetrazione','cacFisico','cacMagico','livelloMob',
+  'effFisica1','effMagica1','dannoArma1','effFisica2','effMagica2','dannoArma2'
+];
+reactiveIds.forEach(id => { const el = $(id); if(el) el.addEventListener('input', updateAll); });
+
+// Aggiungi i listener per i dadi e la modalità arma
+$('diceNum1').addEventListener('input', updateAll);
+$('diceType1').addEventListener('input', updateAll);
+$('diceNum2').addEventListener('input', updateAll);
+$('diceType2').addEventListener('input', updateAll);
+$('weaponMode').addEventListener('change', updateAll);
+
+// NEW: Listener per la checkbox Tricorno
+$('tricornCheckbox').addEventListener('change', updateAll);
+
+// Listener per gli input delle skill (NON chiamano updateAll, ma aggiornano l'output)
+const skillReactiveIds = ['effMagSkill', 'effFisSkill', 'dannoInnato', 'effAbilitaInnato'];
+skillReactiveIds.forEach(id => { const el = $(id); if(el) el.addEventListener('input', updateSkillOutput); });
+
+
+/* ---------------------------
+   Tooltip Resistenza Mob
+   --------------------------- */
+$('resTooltipTrigger').addEventListener('mouseover', function(e) {
+    const level = parseInt($('livelloMob').value) || 1;
+    let desc = `Formula base: Resistenza Mob = Livello × Moltiplicatore.\n`;
+    desc += `Moltiplicatori (aggiornati in base al Livello Mob):\n`;
+    desc += ` • Liv. 46+: +0.25 (x1.25)\n`;
+    desc += ` • Liv. 53+: +0.15 (x1.40)\n`;
+    desc += ` • Liv. 57+: +0.40 (x1.80)\n`;
+    desc += ` • Liv. 62+: +0.45 (x2.25)\n`;
+    desc += `Per Livello ${level}: ${calcResistence(level).toFixed(2)}`;
+    
+    this.title = desc; 
+});
+
+
+/* ---------------------------
+   Save (Popola Tabella Danni) to main table
+   --------------------------- */
+$('saveBtn').addEventListener('click', ()=>{
+  const results = updateAll(); 
+
+  // Calcolo delle differenze per la tabella (solo Arma 1)
+  const diffLore1 = parseFloat($('lore1').value) - parseFloat($('base1').value);
+  const diffCrit1 = parseFloat($('crit1').value) - parseFloat($('base1').value);
+
+  // build snapshot
+  const snapshot = {
+    level: $('livelloMob').value,
+    dam: $('dam').value,
+    spell: $('spellpower').value,
+    precisione: $('precisione').value,
+    colpoCritico: $('colpoCritico').value,
+    letalita: $('letalita').value,
+    penetrazione: $('penetrazione').value,
+    cacFisico: $('cacFisico').value,
+    cacMagico: $('cacMagico').value,
+    // NEW Tricorno state
+    tricornCheckbox: $('tricornCheckbox').checked ? 'true' : 'false',
+    // weapon inputs
+    effFisica1: $('effFisica1').value, effMagica1: $('effMagica1').value, dannoArma1: $('dannoArma1').value,
+    effFisica2: $('effFisica2').value, effMagica2: $('effMagica2').value, dannoArma2: $('dannoArma2').value,
+    // dice selections
+    diceNum1: $('diceNum1').value, diceType1: $('diceType1').value,
+    diceNum2: $('diceNum2').value, diceType2: $('diceType2').value,
+    // computed damages (use underlying displayed values)
+    dmp1: $('dmp1').value,
+    base1: $('base1').value, lore1: $('lore1').value, crit1: $('crit1').value, critLore1: $('critLore1').value,
+    dmp2: $('dmp2').value,
+    base2: $('base2').value, lore2: $('lore2').value, crit2: $('crit2').value, critLore2: $('critLore2').value,
+    // Values for the table columns
+    probLore: fmtNumber(results.ProbLore, 2),
+    diffLore1: fmtDiff(diffLore1),
+    probCrit: fmtNumber(results.ProbCritico, 2),
+    diffCrit1: fmtDiff(diffCrit1),
+    effFisTot: fmtNumber(results.results1.effFisTot * 100, 2),
+    effMagTot: fmtNumber(results.results1.effMagTot * 100, 2),
+    weaponMode: $('weaponMode').value // Modalità arma
+  };
+
+  // create table row visually
+  const tbody = document.querySelector('#mainTable tbody');
+  const tr = document.createElement('tr');
+
+  // Ordine delle colonne: ATTENZIONE A MATCHARE CON L'HEAD DELLA TABELLA!
+  const cols = [
+    'level','dam','spell','precisione','colpoCritico','letalita','penetrazione',
+    'probLore', 'diffLore1', 'probCrit', 'diffCrit1', 
+    'effFisTot', 'effMagTot', 
+    'dmp1',
+    'base1','lore1','crit1','critLore1',
+    'dmp2',
+    'base2','lore2','crit2','critLore2'
+  ];
+
+  const unitCols = {
+      'probLore': '%', 'probCrit': '%', 'effFisTot': '%', 'effMagTot': '%'
+  };
+
+  cols.forEach(k=>{
+    const td = document.createElement('td');
+    let value = snapshot[k] !== undefined ? snapshot[k] : '';
+    td.textContent = value + (unitCols[k] || '');
+    tr.appendChild(td);
+  });
+
+  // add recover button cell
+  const tdBtn = document.createElement('td');
+  const btn = document.createElement('button'); btn.textContent = 'Recupera';
+  // store snapshot in DOM dataset (stringified)
+  tr.dataset.snapshot = JSON.stringify(snapshot);
+  btn.addEventListener('click', ()=> {
+    const snap = JSON.parse(tr.dataset.snapshot);
+    // restore all saved fields
+    const inputs = document.querySelectorAll('input[type="number"], select, input[type="text"]');
+    inputs.forEach(input => {
+        if (snap[input.id] !== undefined) input.value = snap[input.id];
+    });
+    if(snap.weaponMode) $('weaponMode').value = snap.weaponMode;
+    // Restore Tricorno state
+    if ($('tricornCheckbox')) $('tricornCheckbox').checked = (snap.tricornCheckbox === 'true');
+
+    updateAll();
+  });
+  tdBtn.appendChild(btn);
+  tr.appendChild(tdBtn);
+
+  tbody.appendChild(tr);
+  colorCompareMain();
+});
+
+/* colorCompareMain: compares last row damage columns to previous row (Extended to ALL columns) */
+function colorCompareMain(){
+  const tbody = document.querySelector('#mainTable tbody');
+  const rows = tbody.querySelectorAll('tr');
+  if(rows.length<2) return;
+  const last = rows[rows.length-1];
+  const prev = rows[rows.length-2];
+  
+  const numColsToCompare = last.children.length - 1; 
+
+  for(let i=0; i<numColsToCompare; i++){
+    last.children[i].className = '';
+    
+    // Estrai il valore numerico (gestisce +/- e %)
+    const cur = parseFloat(last.children[i].textContent.replace('%','').replace('+','')) || 0;
+    const prv = parseFloat(prev.children[i].textContent.replace('%','').replace('+','')) || 0;
+    
+    if (cur > prv) {
+        last.children[i].className = 'green';
+    } else if (cur < prv) {
+        last.children[i].className = 'red';
+    }
+  }
+}
+
+
+/* ----------------------------------------------------------------------
+   NUOVA LOGICA SKILL/SPELL: Calcola i 4 danni e il DMP
+   ---------------------------------------------------------------------- */
+function calcSkillDamage(Dam, Spell, effMagOriginal, effFisOriginal, DannoInnato, EffAbilInnOriginal, simData) {
+    
+    // 1. Calculate Danno Fisso Puro (BaseVal)
+    let EffMag = effMagOriginal / 100;
+    let EffFis = effFisOriginal / 100;
+    let EffAbilInn = EffAbilInnOriginal / 100;
+
+    let damAdj = Dam, spellAdj = Spell;
+
+    // Logica di base per Danno Innato e Efficienza Abilità (pre-resistenza)
+    if (EffFis > EffMag) {
+      damAdj += DannoInnato;
+      EffFis += EffAbilInn;
+    } else if (EffMag > EffFis) {
+      spellAdj += DannoInnato;
+      EffMag += EffAbilInn;
+    }
+
+    const baseValPuro = (damAdj * EffFis) + (spellAdj * EffMag); // Danno Fisso Puro (senza resistenza)
+
+    // 2. Get Factors from Weapon Calc (FB, FL, Letal_Factor, isTricornActive)
+    const isTricornActive = $('tricornCheckbox').checked;
+    
+    // Recupera i fattori globali (assumiamo che siano stati calcolati in updateAll)
+    // Non importa se results1 ha un danno 0, i fattori FB/FL/LF sono corretti.
+    const FB = simData.results1.FB; 
+    const FL = simData.results1.FL; 
+    const Letal_Factor = simData.results1.Letal_Factor;
+    const ProbLore = simData.ProbLoreFinal; // Usa le probabilità finali (già modificate da Tricorno se necessario)
+    const ProbCritico = simData.ProbCriticoFinal;
+
+    // 3. Apply factors to calculate the four damage types 
+    
+    let D_Base, D_Lore, D_Crit, D_CritLore;
+    
+    // Danno Fisso con Resistenza applicata (D_F_B_Res, D_F_L_Res)
+    const D_F_B_Res = baseValPuro * FB; 
+    const D_F_L_Res = baseValPuro * FL; 
+    
+    // 3.1 Danno Base
+    let baseMultiplier = 1.0;
+    if (isTricornActive) baseMultiplier = (1.00 + Letal_Factor);
+    D_Base = D_F_B_Res * baseMultiplier; 
+    
+    // 3.2 Danno Lore
+    let loreMultiplier = 1.2;
+    if (isTricornActive) loreMultiplier = 1.2 * (1.00 + Letal_Factor);
+    D_Lore = D_F_L_Res * loreMultiplier;
+
+    // 3.3 Danno Critico & Critico+Lore (applica solo se Tricorno is NOT active)
+    if (isTricornActive) {
+        D_Crit = 0;
+        D_CritLore = 0;
+    } else {
+        const critFactor = (1.5 + Letal_Factor);
+        D_Crit = D_F_B_Res * critFactor; 
+        D_CritLore = D_F_L_Res * 1.2 * critFactor;
+    }
+    
+    // 4. Calculate the Skill's Damage Per Minute (DMP) - Average Damage (No Dadi: avgRoll=0)
+    // Usiamo la funzione DMP generica con avgRoll = 0
+    const dmp = calcDMP(D_Base, D_Lore, D_Crit, D_CritLore, ProbLore, ProbCritico, 0);
+
+    return { D_Base, D_Lore, D_Crit, D_CritLore, dmp };
+}
+
+/* ---------------------------
+   Skills: Update only the lanciaOutput (for reactive input)
+   --------------------------- */
+function updateSkillOutput() {
+     // read base Dam and Spell
+    let Dam = parseFloat($('dam').value) || 0;
+    let Spell = parseFloat($('spellpower').value) || 0;
+
+    // read efficiencies from skills (percent -> decimal) - Original values
+    let effMagOriginal = (parseFloat($('effMagSkill').value) || 0);
+    let effFisOriginal = (parseFloat($('effFisSkill').value) || 0);
+    const DannoInnato = parseFloat($('dannoInnato').value) || 0;
+    const EffAbilInnOriginal = (parseFloat($('effAbilitaInnato').value) || 0);
+    
+    // Assicurati che i dati base (simData) siano aggiornati prima del calcolo
+    updateAll(); 
+
+    // 1. Calculate all damages
+    const { dmp } = calcSkillDamage(Dam, Spell, effMagOriginal, effFisOriginal, DannoInnato, EffAbilInnOriginal, window.simData);
+
+    // display the calculated DMP (the average expected damage)
+    $('lanciaOutput').innerHTML = `<strong style="color:var(--green);">${fmtNumber(dmp,4)}</strong>`; 
+}
+
+
+/* ---------------------------
+   Skills: Lancia logic & table (Updated)
+   --------------------------- */
+$('lanciaBtn').addEventListener('click', ()=>{
+  // read base Dam and Spell
+  let Dam = parseFloat($('dam').value) || 0;
+  let Spell = parseFloat($('spellpower').value) || 0;
+
+  // read efficiencies from skills (percent -> decimal) - Original values
+  let effMagOriginal = (parseFloat($('effMagSkill').value) || 0);
+  let effFisOriginal = (parseFloat($('effFisSkill').value) || 0);
+  const DannoInnato = parseFloat($('dannoInnato').value) || 0;
+  const EffAbilInnOriginal = (parseFloat($('effAbilitaInnato').value) || 0);
+
+  // Assicurati che i dati base (simData) siano aggiornati prima del calcolo
+  updateAll(); 
+
+  // 1. Calculate all damages
+  const { 
+      D_Base, 
+      D_Lore, 
+      D_Crit, 
+      D_CritLore, 
+      dmp 
+  } = calcSkillDamage(Dam, Spell, effMagOriginal, effFisOriginal, DannoInnato, EffAbilInnOriginal, window.simData);
+
+  // display the calculated DMP (the average expected damage)
+  $('lanciaOutput').innerHTML = `<strong style="color:var(--green);">${fmtNumber(dmp,4)}</strong>`; 
+  
+  // 2. Build snapshot
+  const snapshot = {
+    effMagSkill: effMagOriginal.toFixed(0),
+    effFisSkill: effFisOriginal.toFixed(0),
+    dannoInnato: DannoInnato.toFixed(0),
+    effAbilitaInnato: EffAbilInnOriginal.toFixed(0)
+  };
+
+  // 3. Populate table row
+  const effMagPct = (effMagOriginal).toFixed(0);
+  const effFisPct = (effFisOriginal).toFixed(0);
+  const effAbilPct = (EffAbilInnOriginal).toFixed(0); 
+  const tbody = document.querySelector('#skillsTable tbody');
+  const tr = document.createElement('tr');
+
+  // New list of cell values for the row
+  const cells = [
+      effMagPct + '%', 
+      effFisPct + '%', 
+      DannoInnato.toFixed(0), 
+      effAbilPct + '%', 
+      fmtNumber(D_Base, 4), // Danno Base
+      fmtNumber(D_Lore, 4), // Danno Lore
+      fmtNumber(D_Crit, 4), // Danno Critico
+      fmtNumber(D_CritLore, 4), // Danno C+L
+      fmtNumber(dmp, 4) // DMP Skill (Danno Medio Ponderato)
+  ];
+  
+  const coloredIndices = [4, 5, 6, 7, 8]; // Indices of damage columns for comparison
+
+  cells.forEach((c, i)=>{
+    const td = document.createElement('td'); 
+    td.textContent = c; 
+    
+    // Apply special coloring to the damage columns
+    if (coloredIndices.includes(i)) {
+         td.style.fontWeight = 'bold';
+         if (i === 4) td.style.color = 'var(--accent)'; // Base in accent
+         if (i === 5) td.style.color = '#b4b4ff'; // Lore in light blue
+         if (i === 6) td.style.color = '#ffb4b4'; // Crit in light red
+         if (i === 7) td.style.color = 'var(--bronze)'; // C+L in bronze
+         if (i === 8) td.style.color = 'var(--green)'; // DMP in green
+    }
+    
+    tr.appendChild(td);
+  });
+
+  tr.dataset.snapshot = JSON.stringify(snapshot);
+
+  // recover button
+  const tdBtn = document.createElement('td');
+  const btn = document.createElement('button'); btn.textContent='Recupera';
+  btn.addEventListener('click', ()=>{
+    const snap = JSON.parse(tr.dataset.snapshot);
+    // Ripristina gli INPUT originali
+    $('effMagSkill').value = snap.effMagSkill;
+    $('effFisSkill').value = snap.effFisSkill;
+    $('dannoInnato').value = snap.dannoInnato;
+    $('effAbilitaInnato').value = snap.effAbilitaInnato;
+    // Ricalcola per aggiornare il display
+    updateSkillOutput(); // Aggiorna l'output DMP
+  });
+  tdBtn.appendChild(btn);
+  tr.appendChild(tdBtn);
+
+  tbody.appendChild(tr);
+  colorCompareSkills();
+});
+
+/* colorCompareSkills: compare the damage columns to previous row */
+function colorCompareSkills(){
+  const tbody = document.querySelector('#skillsTable tbody');
+  const rows = tbody.querySelectorAll('tr');
+  if(rows.length<2) return;
+  const last = rows[rows.length-1];
+  const prev = rows[rows.length-2];
+  
+  // Damage column indices: Danno Base (4) up to DMP Skill (8)
+  for(let i=4; i<=8; i++){
+    const lastCell = last.children[i];
+    const prevCell = prev.children[i];
+    
+    // Estrai il colore originale della cella (per DMP, per esempio)
+    const originalColor = lastCell.style.color; 
+    
+    // Reset coloring class
+    lastCell.className = '';
+    
+    const lastVal = parseFloat(lastCell.textContent) || 0;
+    const prevVal = parseFloat(prevCell.textContent) || 0;
+
+    // Applica classe e colore per il confronto (sovrascrivendo il colore se necessario)
+    if (lastVal > prevVal) {
+      lastCell.className = 'green';
+      lastCell.style.color = 'var(--green)'; 
+    } else if (lastVal < prevVal) {
+      lastCell.className = 'red';
+      lastCell.style.color = 'var(--red)'; 
+    } else {
+        // Se i valori sono uguali, ripristina il colore originale (se specificato nel lanciaBtn)
+        if(i === 4) lastCell.style.color = 'var(--accent)';
+        if(i === 5) lastCell.style.color = '#b4b4ff';
+        if(i === 6) lastCell.style.color = '#ffb4b4';
+        if(i === 7) lastCell.style.color = 'var(--bronze)';
+        if(i === 8) lastCell.style.color = 'var(--green)';
+    }
+  }
+}
+
+/* initial compute */
+updateAll();
+updateSkillOutput();
+
+
+/* ---------------------------
+   Simulazione e Istogramma (Aggiornata per Tiri Indipendenti, Miss e FL)
+   --------------------------- */
+   
+/* ----------------------------------------------------------------------
+   NUOVO: Helper per eseguire un singolo attacco randomico
+   Logica Sequenziale: Miss -> Lore (con FL) -> Critico (con LF)
+   ---------------------------------------------------------------------- */
+function simulateSingleAttack(n, ProbLore, ProbCritico) {
+    // Recupera i dati di base calcolati in updateAll
+    const simResult = window.simData['results' + n];
+
+    if (!simResult || !simResult.isWeaponActive) return 0;
+
+    const isTricornActive = $('tricornCheckbox').checked;
+    
+    // Probabilità di tiro (in decimali)
+    const pL = ProbLore / 100;
+    // Se Tricorno è attivo, pC è 0
+    const pC = (isTricornActive ? 0 : ProbCritico) / 100;
+    
+    // Danni fissi e fattori di resistenza (PURI)
+    const baseValPuro = simResult.D_Fixed_Base_Puro; 
+    const FB = simResult.FB; 
+    const FL = simResult.FL; 
+    const Letal_Factor = simResult.Letal_Factor;
+
+    // Dadi
+    const n_dice = simResult.diceNum;
+    const s_dice = simResult.diceType;
+    const multiplier = simResult.diceMultiplier;
+
+
+    // 1. Roll Miss Chance (5%)
+    if (Math.random() < 0.05) {
+        return 0; // Miss: deal 0 damage
+    }
+
+    // 2. Roll for Lore independently
+    const isLore = Math.random() < pL;
+    
+    // 3. Roll the random dice damage 
+    const diceRoll = rollDice(n_dice, s_dice, multiplier);
+
+    // 4. Calcola il Danno Totale Grezzo (Danno Fisso Puro + Dadi)
+    let totalDamage = baseValPuro + diceRoll;
+
+    // 5. APPLICAZIONE RESISTENZA (NUOVO STEP)
+    // Scegli il Fattore di Resistenza corretto (FL se Lore, FB altrimenti)
+    let resistanceFactor = isLore ? FL : FB;
+    totalDamage *= resistanceFactor; 
+    
+    
+    // 6. Applica i Moltiplicatori Sequenziali (Tricorno, Lore, Critico)
+
+    // Logica Tricorno (moltiplica il Danno Totale RESISTENZA-APPLICATA se non c'è Critico)
+    if (isTricornActive) {
+        // Se Tricorno è attivo, aggiunge il moltiplicatore Letalità al danno BASE (prima di Critico)
+        totalDamage *= (1.00 + Letal_Factor);
+    }
+
+    // Applica Moltiplicatore Lore (1.2x)
+    if (isLore) {
+        totalDamage *= 1.2;
+    }
+
+    // Roll for Critico independently
+    const isCrit = Math.random() < pC;
+
+    // Applica Moltiplicatore Critico ((1.5 + LF)x)
+    if (isCrit && !isTricornActive) { // Applica solo se non c'è Tricorno
+        totalDamage *= (1.5 + Letal_Factor);
+    }
+
+    return totalDamage;
+}
+
+/* Funzione per creare e renderizzare l'istogramma (10 Bins) */
+function createHistogram(damages, containerId, labelId) {
+    const histogramContainer = $(containerId);
+    const labelsContainer = $(labelId);
+    histogramContainer.innerHTML = ''; 
+    labelsContainer.innerHTML = '';
+    
+    if (damages.length === 0) {
+        histogramContainer.style.textAlign = 'center';
+        histogramContainer.textContent = 'Arma inattiva nella modalità selezionata o tutti i colpi mancati (Miss).';
+        return;
+    }
+
+    histogramContainer.style.textAlign = 'left';
+    
+    // 1. Find min, max, and range
+    const minDmg = Math.min(...damages);
+    const maxDmg = Math.max(...damages);
+    // Add a small buffer for the max damage to fall into the last bin
+    const range = maxDmg - minDmg + (maxDmg > minDmg ? 1e-6 : 0); 
+    
+    const numBins = 10;
+    const binSize = range / numBins; 
+
+    // 2. Tally frequencies
+    const frequencies = new Array(numBins).fill(0);
+    damages.forEach(dmg => {
+        let binIndex = Math.floor((dmg - minDmg) / binSize);
+        if (binIndex >= numBins) binIndex = numBins - 1; 
+        if (binIndex < 0) binIndex = 0; 
+        frequencies[binIndex]++;
+    });
+
+    // 3. Find max frequency and count visible bins
+    const maxFreq = Math.max(...frequencies);
+    const visibleBinsIndices = frequencies.map((f, i) => (f > 0 ? i : -1)).filter(i => i !== -1);
+    const numVisibleBins = visibleBinsIndices.length;
+
+    // Gestione caso in cui tutti i danni sono uguali (range=0)
+    if (numVisibleBins === 0 && damages.length > 0) {
+         histogramContainer.textContent = `Danno fisso: ${fmtNumber(damages[0])} (Max Freq: ${maxFreq})`;
+        return;
+    }
+    
+    // ⭐ ⭐ Nuovo: Altezza massima per la barra (80%)
+    const MAX_HEIGHT_PERCENT = 80;
+
+    // New color helper function (light blue to purple)
+    function getColor(freq, maxFreq) {
+        // Normalize frequency from 0 to 1 (0: Celeste, 1: Viola)
+        const ratio = maxFreq > 0 ? freq / maxFreq : 0;
+        
+        // RGB values for Celeste (#7feaff -> 127, 234, 255)
+        const startR = 127, startG = 234, startB = 255; 
+        // RGB values for Viola (Accent: #a020f0 -> 160, 32, 240)
+        const endR = 160, endG = 32, endB = 240; 
+        
+        const r = Math.round(startR + (endR - startR) * ratio);
+        const g = Math.round(startG + (endG - startG) * ratio);
+        const b = Math.round(startB + (endB - startB) * ratio);
+        
+        return `rgb(${r}, ${g}, ${b})`;
+    }
+
+
+    // 4. Render bars and labels
+    const barMargin = 2; // Margin between bars (2px)
+    // Width calculation: (100% - Total Margin) / Num Visible Bins
+    const totalMargin = barMargin * (numVisibleBins - 1);
+    const barWidth = `calc((100% - ${totalMargin}px) / ${numVisibleBins})`;
+
+    frequencies.forEach((freq, index) => {
+        if (freq === 0) return; // Escludi i bin vuoti
+
+        // Bar
+        let height = maxFreq > 0 ? (freq / maxFreq) * MAX_HEIGHT_PERCENT : 0; 
+        height = Math.max(2, height); // Altezza minima di 2px per visibilità
+
+        const bar = document.createElement('div');
+        
+        bar.style.height = height + '%';
+        bar.style.width = barWidth; 
+        bar.style.backgroundColor = getColor(freq, maxFreq); 
+        bar.style.borderRadius = '2px 2px 0 0';
+        bar.style.cursor = 'help';
+        bar.style.transition = 'height 0.3s, background-color 0.3s';
+        
+        // Aggiungi margine destro a tutte le barre tranne l'ultima visibile
+        const isLastVisible = (index === visibleBinsIndices[visibleBinsIndices.length - 1]);
+        if (!isLastVisible) {
+            bar.style.marginRight = barMargin + 'px';
+        }
+
+        // Calculate damage range for tooltip
+        const binStart = minDmg + index * binSize;
+        const binEnd = minDmg + (index + 1) * binSize;
+        
+        bar.title = `Dmg: ${fmtNumber(binStart, 0)} - ${fmtNumber(binEnd, 0)}\nFreq: ${freq} colpi`;
+        
+        histogramContainer.appendChild(bar);
+    });
+    
+    // Render min/max labels
+    const labelMin = document.createElement('span');
+    labelMin.textContent = fmtNumber(minDmg);
+    labelsContainer.appendChild(labelMin);
+
+    const labelMax = document.createElement('span');
+    labelMax.textContent = fmtNumber(maxDmg);
+    labelsContainer.appendChild(labelMax);
+    labelsContainer.style.justifyContent = 'space-between';
+}
+
+
+/* ---------------------------
+   Simulation: Simula 100 attacchi (Aggiornata per Istogramma)
+   --------------------------- */
+$('simulateBtn').addEventListener('click', ()=>{
+  const results = updateAll(); 
+  // Usa le Probabilità FINAL (modificate)
+  const ProbLore = results.ProbLore;
+  const ProbCritico = results.ProbCritico;
+
+  const N_ATTACKS = 100;
+  const damages1 = []; // Danni solo se il colpo va a segno
+  const damages2 = [];
+  
+  let totalDmg1 = 0;
+  let totalDmg2 = 0;
+
+  for(let i=0;i<N_ATTACKS;i++){
+    // Simulate Arma 1
+    const dmg1 = simulateSingleAttack(1, ProbLore, ProbCritico);
+    // Se dmg1 > 0, il colpo è andato a segno (non ha mancato)
+    if(dmg1 > 0) {
+        damages1.push(dmg1);
+    }
+    totalDmg1 += dmg1;
+
+
+    // Simulate Arma 2
+    const dmg2 = simulateSingleAttack(2, ProbLore, ProbCritico);
+    if (dmg2 > 0 && window.simData.results2.isWeaponActive) { // Controlla anche se l'arma è attiva
+        damages2.push(dmg2);
+    }
+    totalDmg2 += dmg2;
+  }
+
+  const avg1 = totalDmg1 / N_ATTACKS || 0; // Totale / 100 attacchi
+  const avg2 = totalDmg2 / N_ATTACKS || 0;
+  
+  // Update simResults (average output)
+  $('simResults').innerHTML = `
+    <div>
+      <h4 style="color:var(--accent); margin:6px 0;">Danno Medio (100 attacchi)</h4>
+      <div style="display:flex; gap:18px; justify-content:flex-start; flex-wrap:wrap;">
+        <div>
+          <strong style="color:var(--celeste);">Arma Principale:</strong> 
+          <span style="color:var(--green);">${fmtNumber(avg1,2)}</span>
+        </div>
+        <div>
+          <strong style="color:var(--celeste);">Arma Secondaria:</strong> 
+          <span style="color:var(--green);">${fmtNumber(avg2,2)}</span>
+        </div>
+      </div>
+      <p style="font-size:0.8rem; margin: 4px 0 0 0; color:#aaa;">
+        (Media calcolata su 100 attacchi totali, inclusi i 5% mancati)
+      </p>
+    </div>
+  `;
+
+  // Render Histograms (Solo per i colpi che sono andati a segno)
+  createHistogram(damages1, 'histogram1', 'histogramLabels1'); // Arma 1 (Primaria)
+  createHistogram(damages2, 'histogram2', 'histogramLabels2'); // Arma 2 (Secondaria)
+});
+
+
+/* ---------------------------
+   Gestione Profili (localStorage)
+   --------------------------- */
+const STORAGE_KEY = 'damage_calc_profiles';
+
+function getProfiles() {
+    try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        return stored ? JSON.parse(stored) : {};
+    } catch (e) {
+        console.error("Errore nel recupero dei profili:", e);
+        return {};
+    }
+}
+
+function saveProfiles(profiles) {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(profiles));
+        populateProfileSelector(); 
+    } catch (e) {
+        console.error("Errore nel salvataggio dei profili:", e);
+        alert("Impossibile salvare il profilo (memoria locale piena o bloccata).");
+    }
+}
+
+function populateProfileSelector(selectedName) {
+    const selector = $('profileSelector');
+    const profiles = getProfiles();
+    selector.innerHTML = '<option value="">-- Seleziona un profilo --</option>';
+
+    Object.keys(profiles).forEach(name => {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        if (name === selectedName) option.selected = true;
+        selector.appendChild(option);
+    });
+}
+populateProfileSelector(); 
+
+function getCurrentSnapshot() {
+    const snapshot = {};
+    const inputs = document.querySelectorAll('input[type="number"], select, input[type="text"], input[type="checkbox"]');
+    inputs.forEach(input => {
+        if (input.id !== 'profileName') {
+            if (input.type === 'checkbox') {
+                snapshot[input.id] = input.checked ? 'true' : 'false';
+            } else {
+                 snapshot[input.id] = input.value;
+            }
+        }
+    });
+    snapshot.weaponMode = $('weaponMode').value; 
+    return snapshot;
+}
+
+function loadSnapshot(snapshot) {
+    const inputs = document.querySelectorAll('input[type="number"], select, input[type="text"], input[type="checkbox"]');
+    inputs.forEach(input => {
+        if (snapshot[input.id] !== undefined) {
+            if (input.type === 'checkbox') {
+                 input.checked = (snapshot[input.id] === 'true');
+            } else {
+                 input.value = snapshot[input.id];
+            }
+        }
+    });
+    if(snapshot.weaponMode) $('weaponMode').value = snapshot.weaponMode;
+
+    updateAll(); 
+    updateSkillOutput(); // Aggiorna l'output DMP dopo aver caricato i dati
+}
+
+// Listeners per i profili
+$('saveProfileBtn').addEventListener('click', () => {
+    const profileName = $('profileName').value.trim();
+    if (!profileName) {
+        alert("Inserisci un nome per il profilo.");
+        return;
+    }
+    const profiles = getProfiles();
+    profiles[profileName] = getCurrentSnapshot();
+    saveProfiles(profiles);
+    $('profileName').value = '';
+    populateProfileSelector(profileName);
+    alert(`Profilo "${profileName}" salvato!`);
+});
+
+$('loadProfileBtn').addEventListener('click', () => {
+    const profileName = $('profileSelector').value;
+    if (!profileName) return;
+
+    const profiles = getProfiles();
+    if (profiles[profileName]) {
+        loadSnapshot(profiles[profileName]);
+        alert(`Profilo "${profileName}" caricato!`);
+    }
+});
+
+$('deleteProfileBtn').addEventListener('click', () => {
+    const profileName = $('profileSelector').value;
+    if (!profileName) return;
+    
+    if (confirm(`Sei sicuro di voler eliminare il profilo "${profileName}"?`)) {
+        const profiles = getProfiles();
+        delete profiles[profileName];
+        saveProfiles(profiles);
+        $('profileSelector').value = '';
+        alert(`Profilo "${profileName}" eliminato.`);
+    }
+});
+
+/* ---------------------------
+   Global Reset Button
+   --------------------------- */
+$('resetAllBtn').addEventListener('click', () => {
+    if (confirm("Sei sicuro di voler resettare tutti i campi ai valori predefiniti?")) {
+        // Valori di default
+        const defaultValues = {
+            dam: 100, spellpower: 80, precisione: 120, colpoCritico: 50, letalita: 180, penetrazione: 50, cacFisico: 20, cacMagico: 15, livelloMob: 50,
+            effFisica1: 25, effMagica1: 10, dannoArma1: 40, diceNum1: 1, diceType1: 6,
+            effFisica2: 15, effMagica2: 20, dannoArma2: 25, diceNum2: 1, diceType2: 6,
+            effMagSkill: 20, effFisSkill: 25, dannoInnato: 50, effAbilitaInnato: 15,
+            weaponMode: 'dualWield', // Modalità predefinita
+            profileName: ''
+        };
+
+        Object.keys(defaultValues).forEach(id => {
+            const el = $(id);
+            if (el) el.value = defaultValues[id];
+        });
+        
+        // Reset della checkbox
+        if ($('tricornCheckbox')) $('tricornCheckbox').checked = false;
+
+        // Pulisci le tabelle e i risultati di simulazione
+        document.querySelector('#mainTable tbody').innerHTML = '';
+        document.querySelector('#skillsTable tbody').innerHTML = '';
+        $('simResults').innerHTML = '';
+        
+        // Pulisci istogrammi
+        $('histogram1').innerHTML = '';
+        $('histogramLabels1').innerHTML = '';
+        $('histogram2').innerHTML = '';
+        $('histogramLabels2').innerHTML = '';
+
+        updateAll();
+        updateSkillOutput();
+    }
+});
+  </script>
+ </body>
+</html>
